@@ -53,20 +53,3 @@ class TinyImageNet(Dataset):
         if self.transform:
             image = self.transform(image)
         return image, label
-
-
-# Example usage:
-if __name__ == "__main__":
-    transform = transforms.Compose(
-        [
-            transforms.Resize((64, 64)),
-            transforms.ToTensor(),
-        ]
-    )
-    dataset = TinyImageNet(
-        root="/path/to/tiny-imagenet-200", split="train", transform=transform
-    )
-    loader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=4)
-    for images, labels in loader:
-        print(images.shape, labels.shape)
-        break
