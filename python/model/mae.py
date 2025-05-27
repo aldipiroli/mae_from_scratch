@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class PatchImage(nn.Module):
     def __init__(self, patch_kernel_size=8):
         super(PatchImage, self).__init__()
@@ -32,6 +33,7 @@ class EmbedPatches(nn.Module):
         x_embed_pos = x_embed + self.positional_embeddings
         return x_embed_pos
 
+
 class EmbedMasking(nn.Module):
     def __init__(self, mask_fraction=0.75):
         super(EmbedMasking, self).__init__()
@@ -39,7 +41,9 @@ class EmbedMasking(nn.Module):
 
     def forward(self, x):
         b, n, embed_size = x.shape
-        random_indices = torch.stack([torch.randperm(n) for _ in range(b)], dim=0)  # (b, n)
+        random_indices = torch.stack(
+            [torch.randperm(n) for _ in range(b)], dim=0
+        )  # (b, n)
         random_indices = random_indices.unsqueeze(-1).expand(-1, -1, embed_size)
         x_shuffle = torch.gather(x, 1, random_indices)
 
@@ -54,8 +58,10 @@ class MAE(nn.Module):
         super(MAE, self).__init__()
         self.patch_kernel_size = patch_kernel_size
         self.img_size = img_size
+        self.num_patches = int((img_size[1] / patch_kernel_size) ** 2)
         self.patch_dim = int((img_size[1] / patch_kernel_size) ** 2 * img_size[0])
         self.embed_size = embed_size
+        self.mask_fraction = 0.75
 
         self.patch_image = PatchImage(patch_kernel_size=self.patch_kernel_size)
         self.embed_patches = EmbedPatches(
@@ -67,14 +73,43 @@ class MAE(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=2
         )
-        self.embed_mask = EmbedMasking()
+        self.embed_mask = EmbedMasking(mask_fraction=self.mask_fraction)
+        self.mask_tokens = nn.Parameter(
+            data=torch.randn(
+                int(self.num_patches * (self.mask_fraction)), self.embed_size
+            ),
+            requires_grad=True,
+        )
+        self.embed_patches_for_decoder = EmbedPatches(
+            patch_size=self.embed_size, embed_size=self.embed_size
+        )
+        self.transformer_decoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=1
+        )
 
     def forward(self, x):
+        b, c, h, w = x.shape
         x_patch = self.patch_image(x)
         x_embed = self.embed_patches(x_patch)
-        x_encoder = self.transformer_encoder(x_embed)
-        x_masked, random_indices = self.embed_mask(x_encoder)
-        return x_masked
+        x_masked, random_indices = self.embed_mask(x_embed)
+        x_encoder = self.transformer_encoder(x_masked)
+
+        mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
+        x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
+        x_unshuffle = self.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
+        x_unshuffle_embed = self.embed_patches_for_decoder(x_unshuffle)
+        x_decode = self.transformer_decoder(x_unshuffle_embed)
+        return x_decode
+
+    def unshuffle_tokens(self, x_encoder_w_masked_tokens, random_indices):
+        b, n, d = random_indices.shape
+        perm = random_indices[:, :, 0]
+        inv = torch.empty_like(perm)
+        for i in range(b):
+            inv[i, perm[i]] = torch.arange(n)
+        inv = inv.unsqueeze(-1).expand(-1, -1, d)
+        x_unshuffle = torch.gather(x_encoder_w_masked_tokens, 1, inv)
+        return x_unshuffle
 
 
 if __name__ == "__main__":
