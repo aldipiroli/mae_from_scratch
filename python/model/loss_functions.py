@@ -8,7 +8,5 @@ class PixelReconstructionLoss(nn.Module):
 
     def forward(self, preds, gt, mask=None):
         loss_fn = torch.nn.MSELoss()
-        loss = loss_fn(preds, gt)
-        if mask:
-            loss = loss[mask]
+        loss = loss_fn(preds[mask], gt[mask])
         return loss
