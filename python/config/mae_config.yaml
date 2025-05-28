@@ -6,6 +6,8 @@ MODEL:
   img_size: [3, 64, 64]
   embed_size: 256
   mask_fraction: 0.75
+  num_transformer_blocks: 12
+  num_attention_heads: 8
 DATA:
   root: "../data"
   batch_size: 32

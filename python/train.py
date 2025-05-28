@@ -17,6 +17,8 @@ def train():
         img_size=config["MODEL"]["img_size"],
         embed_size=config["MODEL"]["embed_size"],
         mask_fraction=config["MODEL"]["mask_fraction"],
+        num_transformer_blocks=config["MODEL"]["num_transformer_blocks"],
+        num_attention_heads=config["MODEL"]["num_attention_heads"],
     )
     trainer.set_model(model)
 

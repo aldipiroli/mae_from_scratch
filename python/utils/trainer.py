@@ -124,6 +124,6 @@ class Trainer:
             all_pixel_preds,
             all_data,
             save_dir=self.config["IMG_OUT_DIR"],
-            idx=f"{str(self.epoch).zfill(3)}_{n_iter}",
+            idx=f"{str(self.epoch).zfill(3)}_{str(n_iter).zfill(5)}",
         )
         self.model.train()
