@@ -6,7 +6,8 @@ MODEL:
   embed_size: 256
   mask_fraction: 0.75
 DATA:
-  batch_size: 8
+  root: "../data"
+  batch_size: 32
 OPTIM:
   optimizer: "adam"
   lr: 0.001

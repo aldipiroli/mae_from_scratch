@@ -19,13 +19,13 @@ def train():
     )
     trainer.set_model(model)
 
-    train_dataset = TinyImageNet(root="../data/tiny-imagenet-200", split="train")
-    val_dataset = TinyImageNet(root="../data/tiny-imagenet-200", split="val")
+    train_dataset = TinyImageNet(root=config["DATA"]["root"], split="train")
+    val_dataset = TinyImageNet(root=config["DATA"]["root"], split="val")
     trainer.set_dataset(
         train_dataset, val_dataset, data_config=config["DATA"]
     )
     trainer.set_optimizer(optim_config=config["OPTIM"])
-    trainer.set_loss_function(loss_fn=PixelReconstructionLoss)
+    trainer.set_loss_function(loss_fn=PixelReconstructionLoss())
     trainer.save_checkpoint()
     trainer.load_latest_checkpoint()
     trainer.train()

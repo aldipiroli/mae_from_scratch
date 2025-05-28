@@ -54,7 +54,12 @@ class EmbedMasking(nn.Module):
         random_indices = torch.stack(
             [torch.randperm(n) for _ in range(b)], dim=0
         )  # (b, n)
-        random_indices = random_indices.unsqueeze(-1).expand(-1, -1, embed_size)
+        random_indices = random_indices.unsqueeze(-1).expand(
+            -1,
+            -1,
+            embed_size,
+        )
+        random_indices = random_indices.to(x.device)
         x_shuffle = torch.gather(x, 1, random_indices)
 
         keep_size = int((1 - self.mask_fraction) * n)
@@ -109,7 +114,7 @@ class MAE(nn.Module):
         mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
         x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
         pred_token_mask = torch.ones(
-            b, self.num_patches, (self.patch_kernel_size**2) * c
+            b, self.num_patches, (self.patch_kernel_size**2) * c, device=x.device
         )
         pred_token_mask[:, : x_encoder.shape[1], :] = 0
 
@@ -130,9 +135,9 @@ class MAE(nn.Module):
     def unshuffle_tokens(self, x_encoder_w_masked_tokens, random_indices):
         b, n, d = random_indices.shape
         perm = random_indices[:, :, 0]
-        inv = torch.empty_like(perm)
+        inv = torch.empty_like(perm, device=x_encoder_w_masked_tokens.device)
         for i in range(b):
-            inv[i, perm[i]] = torch.arange(n)
+            inv[i, perm[i]] = torch.arange(n, device=x_encoder_w_masked_tokens.device)
         inv = inv.unsqueeze(-1).expand(-1, -1, d)
         x_unshuffle = torch.gather(x_encoder_w_masked_tokens, 1, inv)
         return x_unshuffle

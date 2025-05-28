@@ -2,6 +2,7 @@ import torch
 from pathlib import Path
 from torch.utils.data import DataLoader
 from utils.misc import get_device
+from tqdm import tqdm
 
 
 class Trainer:
@@ -12,7 +13,7 @@ class Trainer:
 
         self.ckpt_dir = Path(config["CKPT_DIR"])
         self.ckpt_dir.mkdir(parents=True, exist_ok=True)
-        self.device = self.get_device()
+        self.device = get_device()
 
     def set_model(self, model):
         self.model = model
@@ -80,17 +81,23 @@ class Trainer:
         self.logger.info(f"Optimizer: {self.optimizer}")
 
     def set_loss_function(self, loss_fn):
-        self.loss_fn = loss_fn
+        self.loss_fn = loss_fn.to(self.device)
         self.logger.info(f"Loss function {self.loss_fn}")
 
     def train(self):
-        for curr_epoch in self.optim_config["num_epochs"]:
+        for curr_epoch in range(self.optim_config["num_epochs"]):
             self.epoch = curr_epoch
             self.train_one_epoch()
 
     def train_one_epoch(self):
-        for data, labels in self.train_loader:
-            output_dict = self.model(data)
-            loss = self.loss_fn(output_dict["pixel_preds"], labels)
-            loss.backwards()
-            self.optimizer.step()
+        with tqdm(self.train_loader, desc=f"Epoch {self.epoch}") as pbar:
+            for data, labels in pbar:
+                self.optimizer.zero_grad()
+                data = data.to(self.device)
+                output_dict = self.model(data)
+                loss = self.loss_fn(
+                    output_dict["pixel_preds"], data, output_dict["pred_token_mask"]
+                )
+                loss.backward()
+                self.optimizer.step()
+                pbar.set_postfix({"loss": loss.item()})
