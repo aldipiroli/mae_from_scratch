@@ -54,14 +54,14 @@ class EmbedMasking(nn.Module):
 
 class MAE(nn.Module):
 
-    def __init__(self, patch_kernel_size=8, img_size=(3, 64, 64), embed_size=256):
+    def __init__(self, patch_kernel_size=8, img_size=(3, 64, 64), embed_size=256, mask_fraction=0.75):
         super(MAE, self).__init__()
         self.patch_kernel_size = patch_kernel_size
         self.img_size = img_size
         self.num_patches = int((img_size[1] / patch_kernel_size) ** 2)
         self.patch_dim = int((img_size[1] / patch_kernel_size) ** 2 * img_size[0])
         self.embed_size = embed_size
-        self.mask_fraction = 0.75
+        self.mask_fraction = mask_fraction
 
         self.patch_image = PatchImage(patch_kernel_size=self.patch_kernel_size)
         self.embed_patches = EmbedPatches(
@@ -87,6 +87,8 @@ class MAE(nn.Module):
             self.encoder_layer, num_layers=1
         )
 
+        self.pixel_prediction = nn.Linear(self.embed_size, self.patch_dim)
+
     def forward(self, x):
         b, c, h, w = x.shape
         x_patch = self.patch_image(x)
@@ -96,10 +98,20 @@ class MAE(nn.Module):
 
         mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
         x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
+        pred_token_mask = torch.ones_like(x_encoder_w_masked_tokens)
+        pred_token_mask[:, : x_encoder.shape[1], :] = 0
+
         x_unshuffle = self.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
         x_unshuffle_embed = self.embed_patches_for_decoder(x_unshuffle)
         x_decode = self.transformer_decoder(x_unshuffle_embed)
-        return x_decode
+
+        pixel_preds = self.pixel_prediction(x_decode)
+        pixel_preds = pixel_preds.reshape(b, c, h, w)
+        return_dict = {
+            "pixel_preds": pixel_preds,
+            "pred_token_mask": pred_token_mask,
+        }
+        return return_dict
 
     def unshuffle_tokens(self, x_encoder_w_masked_tokens, random_indices):
         b, n, d = random_indices.shape
@@ -115,5 +127,4 @@ class MAE(nn.Module):
 if __name__ == "__main__":
     model = MAE()
     x = torch.randn(8, 3, 64, 64)
-    x = model(x)
-    print(x.shape)
+    out = model(x)
