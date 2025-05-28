@@ -11,8 +11,18 @@ class PatchImage(nn.Module):
         )
 
     def forward(self, x):
-        x = self.unfold(x)  # B x (CxPxP) x N
-        x = x.permute(0, 2, 1)
+        x = self.unfold(x)  # B x (C*P*P) x N
+        x = x.permute(0, 2, 1)  # (B, N, C*P*P)
+        return x
+
+    def fold(self, x, output_size):
+        x = x.permute(0, 2, 1)  # (B, C*P*P, N)
+        fold = torch.nn.Fold(
+            output_size=output_size,
+            kernel_size=self.patch_kernel_size,
+            stride=self.patch_kernel_size,
+        )
+        x = fold(x)
         return x
 
 
@@ -98,7 +108,7 @@ class MAE(nn.Module):
 
         mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
         x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
-        pred_token_mask = torch.ones_like(x_encoder_w_masked_tokens)
+        pred_token_mask = torch.ones(b, self.num_patches, self.patch_kernel_size**2)
         pred_token_mask[:, : x_encoder.shape[1], :] = 0
 
         x_unshuffle = self.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
@@ -106,7 +116,9 @@ class MAE(nn.Module):
         x_decode = self.transformer_decoder(x_unshuffle_embed)
 
         pixel_preds = self.pixel_prediction(x_decode)
-        pixel_preds = pixel_preds.reshape(b, c, h, w)
+        pixel_preds = self.patch_image.fold(pixel_preds, output_size=(h, w))
+        pred_token_mask = self.patch_image.fold(pred_token_mask, output_size=(h, w))
+
         return_dict = {
             "pixel_preds": pixel_preds,
             "pred_token_mask": pred_token_mask,

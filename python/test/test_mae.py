@@ -2,16 +2,43 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from datasets.tiny_imagenet import TinyImageNet
-from torch.utils.data import DataLoader
+from model.mae import PatchImage, MAE
+import torch
 
 
-def test_tiny_imagenet_dataset():
-    for curr_split in ["train", "val"]:
-        dataset = TinyImageNet(root="../data/tiny-imagenet-200", split=curr_split)
-        batch_size = 8
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-        it = iter(loader)
-        images, labels = next(it)
-        assert images.shape == (batch_size, 3, 64, 64)
-        assert labels.shape == (batch_size,)
+def test_path_image():
+    patch_image = PatchImage()
+    b, c, h, w = 8, 3, 64, 64
+    x = torch.randn(b, c, h, w)
+    y = patch_image(x)
+    y_reshape = patch_image.fold(y, output_size=(h, w))
+    assert torch.equal(y_reshape, x)
+
+
+def test_unshuffle_tokes():
+    mae = MAE()
+
+    b, n, embed_size = 8, 64, 256
+    x = torch.randn(b, n, embed_size)
+    random_indices = torch.stack([torch.randperm(n) for _ in range(b)], dim=0)  # (b, n)
+    random_indices = random_indices.unsqueeze(-1).expand(-1, -1, embed_size)
+    x_shuffle = torch.gather(x, 1, random_indices)
+
+    x_unshuffle = mae.unshuffle_tokens(x_shuffle, random_indices)
+    assert torch.equal(x_unshuffle, x)
+
+
+def test_mae_forward_pass():
+    mae = MAE()
+    b, c, h, w = 8, 3, 64, 64
+    x = torch.randn(b, c, h, w)
+    output_dict = mae(x)
+    assert output_dict["pixel_preds"].shape == (b, c, h, w)
+    assert output_dict["pred_token_mask"].shape == (b, 1, h, w)
+
+
+if __name__ == "__main__":
+    test_path_image()
+    test_unshuffle_tokes()
+    test_mae_forward_pass()
+    print("Test passed.")

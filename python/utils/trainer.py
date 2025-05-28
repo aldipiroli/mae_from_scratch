@@ -3,6 +3,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 from utils.misc import get_device
 
+
 class Trainer:
     def __init__(self, config, logger):
         self.config = config
@@ -41,12 +42,12 @@ class Trainer:
             self.logger.info("No checkpoints found.")
             return None
 
-        latest_ckpt = max(ckpt_files, key=lambda x: int(x.stem.split('_')[1]))
+        latest_ckpt = max(ckpt_files, key=lambda x: int(x.stem.split("_")[1]))
         self.logger.info(f"Loading checkpoint: {latest_ckpt}")
 
-        checkpoint = torch.load(latest_ckpt,weights_only=False)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        checkpoint = torch.load(latest_ckpt, weights_only=False)
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.epoch = checkpoint.get("epoch", 0)
         return latest_ckpt
 
@@ -65,13 +66,15 @@ class Trainer:
             batch_size=1,
             shuffle=True,
         )
-        self.logger.info(f"Train Dataset: {self.train_dataset}" )
-        self.logger.info(f"Val Dataset: {self.val_dataset}" )
+        self.logger.info(f"Train Dataset: {self.train_dataset}")
+        self.logger.info(f"Val Dataset: {self.val_dataset}")
 
     def set_optimizer(self, optim_config):
         self.optim_config = optim_config
         if self.optim_config["optimizer"] == "adam":
-            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.optim_config["lr"])
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=self.optim_config["lr"]
+            )
         else:
             raise ValueError
         self.logger.info(f"Optimizer: {self.optimizer}")
@@ -80,11 +83,14 @@ class Trainer:
         self.loss_fn = loss_fn
         self.logger.info(f"Loss function {self.loss_fn}")
 
-    def train(self): 
+    def train(self):
         for curr_epoch in self.optim_config["num_epochs"]:
             self.epoch = curr_epoch
             self.train_one_epoch()
 
     def train_one_epoch(self):
-        for data, label in self.train_loader:
-            
+        for data, labels in self.train_loader:
+            output_dict = self.model(data)
+            loss = self.loss_fn(output_dict["pixel_preds"], labels)
+            loss.backwards()
+            self.optimizer.step()
