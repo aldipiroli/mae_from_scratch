@@ -2,8 +2,9 @@ import os
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from datasets.download_tiny_imagenet import download_tiny_imagenet
+from imagenet_dataset.download_tiny_imagenet import download_tiny_imagenet
 from pathlib import Path
+
 
 class TinyImageNet(Dataset):
     def __init__(self, root, split="train"):
