@@ -2,9 +2,8 @@ import os
 import urllib.request
 import zipfile
 
-def download_tiny_imagenet():
+def download_tiny_imagenet(destination_dir):
     url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
-    destination_dir = "../data"
     zip_path = os.path.join(destination_dir, "tiny-imagenet-200.zip")
 
     os.makedirs(destination_dir, exist_ok=True)

@@ -1,12 +1,13 @@
 import os
 from PIL import Image
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
-
+from datasets.download_tiny_imagenet import download_tiny_imagenet
+from pathlib import Path
 
 class TinyImageNet(Dataset):
     def __init__(self, root, split="train"):
-        self.root = root
+        self.root = Path(root)
         self.split = split
         self.data = []
         self.labels = []
@@ -17,21 +18,24 @@ class TinyImageNet(Dataset):
                 transforms.ToTensor(),
             ]
         )
+        if not os.path.isdir(self.root / "tiny-imagenet-200"):
+            download_tiny_imagenet(self.root)
+        self.root = self.root / "tiny-imagenet-200"
 
-        wnids_path = os.path.join(root, "wnids.txt")
+        wnids_path = os.path.join(self.root, "wnids.txt")
         with open(wnids_path, "r") as f:
             wnids = [line.strip() for line in f.readlines()]
         self.class_to_idx = {wnid: idx for idx, wnid in enumerate(wnids)}
 
         if split == "train":
             for wnid in wnids:
-                img_dir = os.path.join(root, "train", wnid, "images")
+                img_dir = os.path.join(self.root, "train", wnid, "images")
                 for img_name in os.listdir(img_dir):
                     self.data.append(os.path.join(img_dir, img_name))
                     self.labels.append(self.class_to_idx[wnid])
         elif split == "val":
-            val_img_dir = os.path.join(root, "val", "images")
-            val_annotations = os.path.join(root, "val", "val_annotations.txt")
+            val_img_dir = os.path.join(self.root, "val", "images")
+            val_annotations = os.path.join(self.root, "val", "val_annotations.txt")
             img_to_wnid = {}
             with open(val_annotations, "r") as f:
                 for line in f:
