@@ -1,5 +1,6 @@
 CKPT_DIR: "../artifacts/ckpts"
 LOG_DIR: "../artifacts/logs"
+IMG_OUT_DIR: "../artifacts/img"
 MODEL:
   patch_kernel_size: 8
   img_size: [3, 64, 64]

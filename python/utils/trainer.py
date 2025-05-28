@@ -1,7 +1,7 @@
 import torch
 from pathlib import Path
 from torch.utils.data import DataLoader
-from utils.misc import get_device
+from utils.misc import get_device, save_images
 from tqdm import tqdm
 
 
@@ -65,7 +65,7 @@ class Trainer:
         self.val_loader = DataLoader(
             self.val_dataset,
             batch_size=1,
-            shuffle=True,
+            shuffle=False,
         )
         self.logger.info(f"Train Dataset: {self.train_dataset}")
         self.logger.info(f"Val Dataset: {self.val_dataset}")
@@ -88,10 +88,12 @@ class Trainer:
         for curr_epoch in range(self.optim_config["num_epochs"]):
             self.epoch = curr_epoch
             self.train_one_epoch()
+            self.evaluate_model()
 
-    def train_one_epoch(self):
-        with tqdm(self.train_loader, desc=f"Epoch {self.epoch}") as pbar:
-            for data, labels in pbar:
+    def train_one_epoch(self, eval_every_iter=500):
+        self.model.train()
+        with tqdm(enumerate(self.train_loader), desc=f"Epoch {self.epoch}") as pbar:
+            for n_iter, (data, labels) in pbar:
                 self.optimizer.zero_grad()
                 data = data.to(self.device)
                 output_dict = self.model(data)
@@ -101,3 +103,27 @@ class Trainer:
                 loss.backward()
                 self.optimizer.step()
                 pbar.set_postfix({"loss": loss.item()})
+                if n_iter % eval_every_iter == 0:
+                    self.evaluate_model(n_iter=n_iter)
+        self.save_checkpoint()
+
+    def evaluate_model(self, max_num_imgs=5, n_iter=None):
+        self.model.eval()
+        all_pixel_preds = []
+        all_data = []
+        for idx, (data, labels) in enumerate(self.val_loader):
+            data = data.to(self.device)
+            output_dict = self.model(data)
+            pixel_preds = output_dict["pixel_preds"]
+            all_pixel_preds.append(pixel_preds)
+            all_data.append(data)
+            if idx>max_num_imgs:
+                break
+
+        save_images(
+            all_pixel_preds,
+            all_data,
+            save_dir=self.config["IMG_OUT_DIR"],
+            idx=f"{str(self.epoch).zfill(3)}_{n_iter}",
+        )
+        self.model.train()
