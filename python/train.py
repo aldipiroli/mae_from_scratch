@@ -17,8 +17,6 @@ def train():
         img_size=config["MODEL"]["img_size"],
         embed_size=config["MODEL"]["embed_size"],
         mask_fraction=config["MODEL"]["mask_fraction"],
-        num_transformer_blocks=config["MODEL"]["num_transformer_blocks"],
-        num_attention_heads=config["MODEL"]["num_attention_heads"],
     )
     trainer.set_model(model)
 
@@ -29,7 +27,7 @@ def train():
     trainer.set_loss_function(loss_fn=PixelReconstructionLoss())
     trainer.save_checkpoint()
     trainer.load_latest_checkpoint()
-    trainer.train()
+    trainer.train_on_single_batch()
 
 
 if __name__ == "__main__":

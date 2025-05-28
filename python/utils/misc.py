@@ -63,15 +63,15 @@ def save_images(predictions, gts, save_dir="output", idx="idx"):
         pred_np_list.append(pred_np)
         gt_np_list.append(gt_np)
 
-    fig, axs = plt.subplots(n, 2, figsize=(8, 4 * n))
+    fig, axs = plt.subplots(2, n, figsize=(4 * n, 8))
 
     for i in range(n):
-        axs[i, 0].imshow(pred_np_list[i])
-        axs[i, 0].set_title(f"Prediction")
-        axs[i, 0].axis("off")
-        axs[i, 1].imshow(gt_np_list[i])
-        axs[i, 1].set_title(f"Ground Truth")
-        axs[i, 1].axis("off")
+        axs[0, i].imshow(pred_np_list[i])
+        axs[0, i].set_title(f"Prediction {i+1}")
+        axs[0, i].axis("off")
+        axs[1, i].imshow(gt_np_list[i])
+        axs[1, i].set_title(f"Ground Truth {i+1}")
+        axs[1, i].axis("off")
     fig.suptitle(str(idx), fontsize=16)
 
     plt.tight_layout()

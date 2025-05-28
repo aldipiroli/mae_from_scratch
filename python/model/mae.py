@@ -27,13 +27,13 @@ class PatchImage(nn.Module):
 
 
 class EmbedPatches(nn.Module):
-    def __init__(self, patch_size=192, embed_size=256, num_patches=64):
+    def __init__(self, patch_dim=192, embed_size=256, num_patches=64):
         super(EmbedPatches, self).__init__()
         self.embed_size = embed_size
         self.num_patches = num_patches
-        self.patch_size = patch_size
+        self.patch_dim = patch_dim
 
-        self.patch_embed_transform = nn.Linear(self.patch_size, self.embed_size)
+        self.patch_embed_transform = nn.Linear(self.patch_dim, self.embed_size)
         self.positional_embeddings = nn.Parameter(
             data=torch.randn(self.num_patches, embed_size), requires_grad=True
         )
@@ -90,13 +90,15 @@ class MAE(nn.Module):
 
         self.patch_image = PatchImage(patch_kernel_size=self.patch_kernel_size)
         self.embed_patches = EmbedPatches(
-            patch_size=self.patch_dim, embed_size=self.embed_size
+            patch_dim=self.patch_dim,
+            embed_size=self.embed_size,
+            num_patches=self.num_patches,
         )
         self.encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.embed_size, nhead=self.num_attention_heads
+            d_model=self.embed_size, nhead=4
         )
         self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=self.num_transformer_blocks
+            self.encoder_layer, num_layers=6
         )
         self.embed_mask = EmbedMasking(mask_fraction=self.mask_fraction)
         self.mask_tokens = nn.Parameter(
@@ -106,10 +108,12 @@ class MAE(nn.Module):
             requires_grad=True,
         )
         self.embed_patches_for_decoder = EmbedPatches(
-            patch_size=self.embed_size, embed_size=self.embed_size
+            patch_dim=self.embed_size,
+            embed_size=self.embed_size,
+            num_patches=self.num_patches,
         )
         self.transformer_decoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=1
+            self.encoder_layer, num_layers=4
         )
 
         self.pixel_prediction = nn.Linear(self.embed_size, self.patch_dim)
@@ -133,12 +137,10 @@ class MAE(nn.Module):
         x_decode = self.transformer_decoder(x_unshuffle_embed)
 
         pixel_preds = self.pixel_prediction(x_decode)
-        pixel_preds = self.patch_image.fold(pixel_preds, output_size=(h, w))
-        pred_token_mask = self.patch_image.fold(pred_token_mask, output_size=(h, w))
-
         return_dict = {
             "pixel_preds": pixel_preds,
             "pred_token_mask": pred_token_mask.bool(),
+            "x_patch": x_patch,
         }
         return return_dict
 

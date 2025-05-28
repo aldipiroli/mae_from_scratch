@@ -98,7 +98,9 @@ class Trainer:
                 data = data.to(self.device)
                 output_dict = self.model(data)
                 loss = self.loss_fn(
-                    output_dict["pixel_preds"], data, output_dict["pred_token_mask"]
+                    output_dict["pixel_preds"],
+                    output_dict["x_patch"],
+                    output_dict["pred_token_mask"],
                 )
                 loss.backward()
                 self.optimizer.step()
@@ -110,20 +112,55 @@ class Trainer:
     def evaluate_model(self, max_num_imgs=5, n_iter=None):
         self.model.eval()
         all_pixel_preds = []
-        all_data = []
+        all_x_patch = []
         for idx, (data, labels) in enumerate(self.val_loader):
             data = data.to(self.device)
             output_dict = self.model(data)
             pixel_preds = output_dict["pixel_preds"]
-            all_pixel_preds.append(pixel_preds)
-            all_data.append(data)
+            x_patch = output_dict["x_patch"]
+            all_pixel_preds.append(self.model.patch_image.fold(pixel_preds, (64, 64)))
+            all_x_patch.append(self.model.patch_image.fold(x_patch, (64, 64)))
             if idx>max_num_imgs:
                 break
 
         save_images(
             all_pixel_preds,
-            all_data,
+            all_x_patch,
             save_dir=self.config["IMG_OUT_DIR"],
             idx=f"{str(self.epoch).zfill(3)}_{str(n_iter).zfill(5)}",
         )
         self.model.train()
+
+    def train_on_single_batch(self, num_epochs=1000):
+        """
+        Train the model on a single batch for a number of epochs to check if it can overfit.
+        """
+        self.model.train()
+        # Get a single batch
+        data_iter = iter(self.train_loader)
+        data, labels = next(data_iter)
+        data = data.to(self.device)
+        labels = labels.to(self.device) if hasattr(labels, 'to') else labels
+        for epoch in range(num_epochs):
+            self.optimizer.zero_grad()
+            output_dict = self.model(data)
+            loss = self.loss_fn(
+                output_dict["pixel_preds"], output_dict["x_patch"], output_dict["pred_token_mask"]
+            )
+            loss.backward()
+            self.optimizer.step()
+            print(f"[Single Batch] Epoch {epoch+1}/{num_epochs} - Loss: {loss.item():.6f}")
+            # Optionally evaluate on the same batch
+            self.model.eval()
+            if epoch % 10 == 0:
+                with torch.no_grad():
+                        output_dict = self.model(data)
+                        pixel_preds = output_dict["pixel_preds"]
+                        x_patch = output_dict["x_patch"]
+                        save_images(
+                            self.model.patch_image.fold(pixel_preds, (64, 64)),
+                            self.model.patch_image.fold(x_patch, (64, 64)),
+                            save_dir=self.config["IMG_OUT_DIR"],
+                            idx=f"single_batch_{str(self.epoch).zfill(3)}",
+                        )
+            self.model.train()
