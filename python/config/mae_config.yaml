@@ -1,0 +1,13 @@
+CKPT_DIR: "../artifacts/ckpts"
+LOG_DIR: "../artifacts/logs"
+MODEL:
+  patch_kernel_size: 8
+  img_size: [3, 64, 64]
+  embed_size: 256
+  mask_fraction: 0.75
+DATA:
+  batch_size: 8
+OPTIM:
+  optimizer: "adam"
+  lr: 0.001
+  num_epochs: 10

@@ -1,5 +1,6 @@
 # --- project related stuff ---
 data/
+artifacts/
 *tmp.png
 
 # Byte-compiled / optimized / DLL files

@@ -1,13 +1,34 @@
 import torch
-from models.cnn_vit import ViT
-from datasets.mnist_dataset import get_mnist_dataloaders
-import torch.optim as optim
-import torch.nn as nn
-from tqdm import tqdm
-import utils as my_utils
+from utils.trainer import Trainer
+from utils.misc import load_config, get_logger
+from model.mae import MAE
+from datasets.tiny_imagenet import TinyImageNet
+from model.loss_functions import PixelReconstructionLoss
 
+def train():
+    config = load_config("config/mae_config.yaml")
+    print(config)
+    logger = get_logger(config["LOG_DIR"])
+    trainer = Trainer(config, logger)
 
-def train(): ...
+    model = MAE(
+        patch_kernel_size=config["MODEL"]["patch_kernel_size"],
+        img_size=config["MODEL"]["img_size"],
+        embed_size=config["MODEL"]["embed_size"],
+        mask_fraction=config["MODEL"]["mask_fraction"],
+    )
+    trainer.set_model(model)
+
+    train_dataset = TinyImageNet(root="../data/tiny-imagenet-200", split="train")
+    val_dataset = TinyImageNet(root="../data/tiny-imagenet-200", split="val")
+    trainer.set_dataset(
+        train_dataset, val_dataset, data_config=config["DATA"]
+    )
+    trainer.set_optimizer(optim_config=config["OPTIM"])
+    trainer.set_loss_function(loss_fn=PixelReconstructionLoss)
+    trainer.save_checkpoint()
+    trainer.load_latest_checkpoint()
+    trainer.train()
 
 
 if __name__ == "__main__":
