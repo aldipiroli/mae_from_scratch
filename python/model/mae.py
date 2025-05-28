@@ -108,7 +108,9 @@ class MAE(nn.Module):
 
         mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
         x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
-        pred_token_mask = torch.ones(b, self.num_patches, self.patch_kernel_size**2)
+        pred_token_mask = torch.ones(
+            b, self.num_patches, (self.patch_kernel_size**2) * c
+        )
         pred_token_mask[:, : x_encoder.shape[1], :] = 0
 
         x_unshuffle = self.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
@@ -121,7 +123,7 @@ class MAE(nn.Module):
 
         return_dict = {
             "pixel_preds": pixel_preds,
-            "pred_token_mask": pred_token_mask,
+            "pred_token_mask": pred_token_mask.bool(),
         }
         return return_dict
 

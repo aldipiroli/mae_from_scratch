@@ -34,7 +34,7 @@ def test_mae_forward_pass():
     x = torch.randn(b, c, h, w)
     output_dict = mae(x)
     assert output_dict["pixel_preds"].shape == (b, c, h, w)
-    assert output_dict["pred_token_mask"].shape == (b, 1, h, w)
+    assert output_dict["pred_token_mask"].shape == (b, c, h, w)
 
 
 if __name__ == "__main__":
