@@ -95,14 +95,14 @@ class MAE(nn.Module):
             num_patches=self.num_patches,
         )
         self.encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.embed_size, nhead=4
+            d_model=self.embed_size, nhead=4,batch_first=True
         )
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, num_layers=6
         )
         self.embed_mask = EmbedMasking(mask_fraction=self.mask_fraction)
         self.mask_tokens = nn.Parameter(
-            data=torch.randn(
+            data=torch.zeros(
                 int(self.num_patches * (self.mask_fraction)), self.embed_size
             ),
             requires_grad=True,
