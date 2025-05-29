@@ -2,11 +2,11 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model.mae import PatchImage, MAE
+from model.mae import PatchImage, MAE, EmbedMasking
 import torch
 
 
-def test_path_image():
+def test_patch_image():
     patch_image = PatchImage()
     b, c, h, w = 8, 3, 64, 64
     x = torch.randn(b, c, h, w)
@@ -28,17 +28,36 @@ def test_unshuffle_tokes():
     assert torch.equal(x_unshuffle, x)
 
 
+def test_patch_and_unshuffle():
+    b, c, h, w = 8, 3, 64, 64
+    x = torch.randn(b, c, h, w)
+
+    mae = MAE(embed_size=192)
+    patch_image = PatchImage()
+    x_patch = patch_image(x)
+
+    embed_mask = EmbedMasking(mask_fraction=0.25)
+    b, n, d = x_patch.shape
+    x_embed, random_indices = embed_mask(x_patch)
+    mask_tokens = torch.zeros(b, 48, d)
+
+    x_encoder_w_masked_tokens = torch.cat([x_embed, mask_tokens], 1)
+    x_unshuffle = mae.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
+    x_fold = patch_image.fold(x_unshuffle, (h,w))
+    assert x_fold.shape == (b, c, h, w)
+
 def test_mae_forward_pass():
     mae = MAE()
     b, c, h, w = 8, 3, 64, 64
+    n, d = 64, 192
     x = torch.randn(b, c, h, w)
     output_dict = mae(x)
-    assert output_dict["pixel_preds"].shape == (b, c, h, w)
-    assert output_dict["pred_token_mask"].shape == (b, c, h, w)
-
+    assert output_dict["pixel_preds"].shape == (b, n,d)
+    assert output_dict["pred_token_mask"].shape == (b, n, d)
 
 if __name__ == "__main__":
-    test_path_image()
+    test_patch_image()
     test_unshuffle_tokes()
     test_mae_forward_pass()
+    test_patch_and_unshuffle()
     print("Test passed.")
