@@ -6,7 +6,9 @@ class PixelReconstructionLoss(nn.Module):
     def __init__(self):
         super(PixelReconstructionLoss, self).__init__()
 
-    def forward(self, preds, gt, mask, normalize=False):
+    def forward(self, preds, gt, mask, normalize=False, use_masking=False):
+        if not use_masking:
+            mask = torch.ones_like(mask)
         if normalize:
             mean = torch.mean(gt, dim=-1, keepdim=True)
             std = torch.std(gt, dim=-1, keepdim=True) + 1e-6
