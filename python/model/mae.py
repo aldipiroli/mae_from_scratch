@@ -92,21 +92,22 @@ class MAE(nn.Module):
             embed_size=self.embed_size,
             num_patches=self.num_patches,
         )
-        self.encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.embed_size,
-            nhead=self.encoder_num_attention_heads,
-            batch_first=True,
-        )
-        self.decoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.embed_size,
-            nhead=self.decoder_num_attention_heads,
-            batch_first=True,
-        )
         self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=self.encoder_num_transformer_blocks
+            nn.TransformerEncoderLayer(
+                d_model=self.embed_size,
+                nhead=self.encoder_num_attention_heads,
+                batch_first=True,
+            ),
+            num_layers=self.encoder_num_transformer_blocks,
         )
+
         self.transformer_decoder = nn.TransformerEncoder(
-            self.decoder_layer, num_layers=self.decoder_num_transformer_blocks
+            nn.TransformerEncoderLayer(
+                d_model=self.embed_size,
+                nhead=self.decoder_num_attention_heads,
+                batch_first=True,
+            ),
+            num_layers=self.decoder_num_transformer_blocks,
         )
 
         self.embed_mask = EmbedMasking(mask_fraction=self.mask_fraction)
@@ -131,8 +132,8 @@ class MAE(nn.Module):
 
         mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
         x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
-        pred_token_mask = torch.ones(b, self.num_patches, (self.patch_kernel_size**2) * c, device=x.device)
-        pred_token_mask[:, : x_encoder.shape[1], :] = 0
+        pred_token_mask = torch.ones(b, self.num_patches, device=x.device)
+        pred_token_mask[:, : x_encoder.shape[1]] = 0
 
         x_unshuffle = self.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
         x_unshuffle_embed = self.embed_patches_for_decoder(x_unshuffle)
