@@ -2,6 +2,7 @@ import os
 import urllib.request
 import zipfile
 
+
 def download_tiny_imagenet(destination_dir):
     url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
     zip_path = os.path.join(destination_dir, "tiny-imagenet-200.zip")
@@ -18,11 +19,12 @@ def download_tiny_imagenet(destination_dir):
     extract_path = os.path.join(destination_dir, "tiny-imagenet-200")
     if not os.path.exists(extract_path):
         print("Extracting zip file...")
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(destination_dir)
         print("Extraction complete.")
     else:
         print("Dataset already extracted.")
+
 
 if __name__ == "__main__":
     download_tiny_imagenet()

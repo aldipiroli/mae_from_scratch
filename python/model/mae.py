@@ -6,9 +6,7 @@ class PatchImage(nn.Module):
     def __init__(self, patch_kernel_size=8):
         super(PatchImage, self).__init__()
         self.patch_kernel_size = patch_kernel_size
-        self.unfold = torch.nn.Unfold(
-            kernel_size=patch_kernel_size, stride=patch_kernel_size
-        )
+        self.unfold = torch.nn.Unfold(kernel_size=patch_kernel_size, stride=patch_kernel_size)
 
     def forward(self, x):
         x = self.unfold(x)  # B x (C*P*P) x N
@@ -34,9 +32,7 @@ class EmbedPatches(nn.Module):
         self.patch_dim = patch_dim
 
         self.patch_embed_transform = nn.Linear(self.patch_dim, self.embed_size)
-        self.positional_embeddings = nn.Parameter(
-            data=torch.randn(self.num_patches, embed_size), requires_grad=True
-        )
+        self.positional_embeddings = nn.Parameter(data=torch.randn(self.num_patches, embed_size), requires_grad=True)
 
     def forward(self, x):
         x_embed = self.patch_embed_transform(x)
@@ -51,9 +47,7 @@ class EmbedMasking(nn.Module):
 
     def forward(self, x):
         b, n, embed_size = x.shape
-        random_indices = torch.stack(
-            [torch.randperm(n) for _ in range(b)], dim=0
-        )  # (b, n)
+        random_indices = torch.stack([torch.randperm(n) for _ in range(b)], dim=0)  # (b, n)
         random_indices = random_indices.unsqueeze(-1).expand(
             -1,
             -1,
@@ -68,7 +62,6 @@ class EmbedMasking(nn.Module):
 
 
 class MAE(nn.Module):
-
     def __init__(
         self,
         patch_kernel_size=8,
@@ -115,12 +108,10 @@ class MAE(nn.Module):
         self.transformer_decoder = nn.TransformerEncoder(
             self.decoder_layer, num_layers=self.decoder_num_transformer_blocks
         )
-        
+
         self.embed_mask = EmbedMasking(mask_fraction=self.mask_fraction)
         self.mask_tokens = nn.Parameter(
-            data=torch.zeros(
-                int(self.num_patches * (self.mask_fraction)), self.embed_size
-            ),
+            data=torch.zeros(int(self.num_patches * (self.mask_fraction)), self.embed_size),
             requires_grad=True,
         )
         self.embed_patches_for_decoder = EmbedPatches(
@@ -140,9 +131,7 @@ class MAE(nn.Module):
 
         mask_tokens = self.mask_tokens.unsqueeze(0).expand(b, -1, -1)
         x_encoder_w_masked_tokens = torch.cat([x_encoder, mask_tokens], 1)
-        pred_token_mask = torch.ones(
-            b, self.num_patches, (self.patch_kernel_size**2) * c, device=x.device
-        )
+        pred_token_mask = torch.ones(b, self.num_patches, (self.patch_kernel_size**2) * c, device=x.device)
         pred_token_mask[:, : x_encoder.shape[1], :] = 0
 
         x_unshuffle = self.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)

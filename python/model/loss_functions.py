@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class PixelReconstructionLoss(nn.Module):
     def __init__(self):
         super(PixelReconstructionLoss, self).__init__()
@@ -9,7 +10,7 @@ class PixelReconstructionLoss(nn.Module):
         if normalize:
             mean = torch.mean(gt, dim=-1, keepdim=True)
             std = torch.std(gt, dim=-1, keepdim=True) + 1e-6
-            target = (gt-mean) / std
+            target = (gt - mean) / std
         else:
             target = gt
 

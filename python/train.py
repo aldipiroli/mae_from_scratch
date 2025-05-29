@@ -1,9 +1,8 @@
-import torch
-from utils.trainer import Trainer
-from utils.misc import load_config, get_logger
-from model.mae import MAE
 from imagenet_dataset.tiny_imagenet import TinyImageNet
 from model.loss_functions import PixelReconstructionLoss
+from model.mae import MAE
+from utils.misc import get_logger, load_config
+from utils.trainer import Trainer
 
 
 def train():

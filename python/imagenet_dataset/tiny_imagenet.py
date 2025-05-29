@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
+
+from imagenet_dataset.download_tiny_imagenet import download_tiny_imagenet
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from imagenet_dataset.download_tiny_imagenet import download_tiny_imagenet
-from pathlib import Path
 
 
 class TinyImageNet(Dataset):

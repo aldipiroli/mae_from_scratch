@@ -1,9 +1,9 @@
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model.loss_functions import PixelReconstructionLoss
 import torch
+from model.loss_functions import PixelReconstructionLoss
 
 
 def test_pixel_reconstruction_loss():
@@ -15,6 +15,7 @@ def test_pixel_reconstruction_loss():
     loss_fn = PixelReconstructionLoss()
     loss = loss_fn(x, y, mask)
     assert loss > 0
+
 
 if __name__ == "__main__":
     test_pixel_reconstruction_loss()

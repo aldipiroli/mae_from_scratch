@@ -1,8 +1,9 @@
-import torch
 from pathlib import Path
+
+import torch
 from torch.utils.data import DataLoader
-from utils.misc import get_device, save_images
 from tqdm import tqdm
+from utils.misc import get_device, save_images
 
 
 class Trainer:
@@ -75,15 +76,11 @@ class Trainer:
     def set_optimizer(self, optim_config):
         self.optim_config = optim_config
         if self.optim_config["optimizer"] == "AdamW":
-            self.optimizer = torch.optim.AdamW(
-                self.model.parameters(), lr=self.optim_config["lr"]
-            )
+            self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.optim_config["lr"])
 
             self.scheduler = torch.optim.lr_scheduler.StepLR(
                 self.optimizer,
-                step_size=self.optim_config.get(
-                    "step_size", self.optim_config["weight_decay_step"]
-                ),
+                step_size=self.optim_config.get("step_size", self.optim_config["weight_decay_step"]),
                 gamma=self.optim_config.get("gamma", self.optim_config["weight_decay"]),
             )
         else:
@@ -161,9 +158,7 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
             # self.scheduler.step()
-            print(
-                f"[Single Batch] Epoch {epoch+1}/{num_epochs} - Loss: {loss.item():.6f}"
-            )
+            print(f"[Single Batch] Epoch {epoch+1}/{num_epochs} - Loss: {loss.item():.6f}")
 
             self.model.eval()
             if epoch % 10 == 0:

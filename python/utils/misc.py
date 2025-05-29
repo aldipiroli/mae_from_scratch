@@ -1,19 +1,19 @@
-import torch
-from pathlib import Path
-import yaml
 import logging
 import os
 from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import yaml
+
 
 def get_device():
     device = torch.device(
-        "cuda"
-        if torch.cuda.is_available()
-        else ("mps" if torch.backends.mps.is_available() else "cpu")
+        "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
     )
     return device
+
 
 def load_config(path):
     with open(path, "r") as f:
@@ -37,11 +37,12 @@ def get_logger(log_dir):
         logger.addHandler(ch)
     return logger
 
+
 def save_images(predictions, gts, save_dir="output", idx="idx"):
     n = len(predictions)
     if n == 1:
-        predictions = [predictions,predictions]
-        gts = [gts,gts]
+        predictions = [predictions, predictions]
+        gts = [gts, gts]
         n = 2
 
     pred_np_list = []

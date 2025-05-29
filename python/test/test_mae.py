@@ -1,9 +1,9 @@
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model.mae import PatchImage, MAE, EmbedMasking
 import torch
+from model.mae import MAE, EmbedMasking, PatchImage
 
 
 def test_patch_image():
@@ -43,8 +43,9 @@ def test_patch_and_unshuffle():
 
     x_encoder_w_masked_tokens = torch.cat([x_embed, mask_tokens], 1)
     x_unshuffle = mae.unshuffle_tokens(x_encoder_w_masked_tokens, random_indices)
-    x_fold = patch_image.fold(x_unshuffle, (h,w))
+    x_fold = patch_image.fold(x_unshuffle, (h, w))
     assert x_fold.shape == (b, c, h, w)
+
 
 def test_mae_forward_pass():
     mae = MAE()
@@ -52,8 +53,9 @@ def test_mae_forward_pass():
     n, d = 64, 192
     x = torch.randn(b, c, h, w)
     output_dict = mae(x)
-    assert output_dict["pixel_preds"].shape == (b, n,d)
+    assert output_dict["pixel_preds"].shape == (b, n, d)
     assert output_dict["pred_token_mask"].shape == (b, n, d)
+
 
 if __name__ == "__main__":
     test_patch_image()
