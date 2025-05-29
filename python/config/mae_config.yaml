@@ -12,8 +12,8 @@ MODEL:
   decoder_num_attention_heads: 6
 DATA:
   root: "../data"
-  batch_size: 2
+  batch_size: 3
 OPTIM:
-  optimizer: "adam"
+  optimizer: "AdamW"
   lr: 0.001
   num_epochs: 10
