@@ -131,16 +131,14 @@ class Trainer:
         )
         self.model.train()
 
-    def train_on_single_batch(self, num_epochs=1000):
-        """
-        Train the model on a single batch for a number of epochs to check if it can overfit.
-        """
+    def train_on_single_batch(self, num_epochs=100000):
         self.model.train()
-        # Get a single batch
+
         data_iter = iter(self.train_loader)
         data, labels = next(data_iter)
         data = data.to(self.device)
-        labels = labels.to(self.device) if hasattr(labels, 'to') else labels
+        labels = labels.to(self.device)
+
         for epoch in range(num_epochs):
             self.optimizer.zero_grad()
             output_dict = self.model(data)
@@ -150,7 +148,7 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
             print(f"[Single Batch] Epoch {epoch+1}/{num_epochs} - Loss: {loss.item():.6f}")
-            # Optionally evaluate on the same batch
+
             self.model.eval()
             if epoch % 10 == 0:
                 with torch.no_grad():
