@@ -32,7 +32,7 @@ class EmbedPatches(nn.Module):
         self.patch_dim = patch_dim
 
         self.patch_embed_transform = nn.Linear(self.patch_dim, self.embed_size)
-        self.positional_embeddings = nn.Parameter(data=torch.randn(self.num_patches, embed_size), requires_grad=True)
+        self.positional_embeddings = nn.Parameter(data=torch.zeros(self.num_patches, embed_size), requires_grad=True)
 
     def forward(self, x):
         x_embed = self.patch_embed_transform(x)
@@ -82,7 +82,7 @@ class MAE(nn.Module):
         self.patch_kernel_size = patch_kernel_size
         self.img_size = img_size
         self.num_patches = int((img_size[1] / patch_kernel_size) ** 2)
-        self.patch_dim = int((img_size[1] / patch_kernel_size) ** 2 * img_size[0])
+        self.patch_dim = patch_kernel_size * patch_kernel_size * img_size[0]
         self.embed_size = embed_size
         self.mask_fraction = mask_fraction
 
