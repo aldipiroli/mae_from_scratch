@@ -111,6 +111,7 @@ class Trainer:
                     output_dict["pred_token_mask"],
                 )
                 loss.backward()
+                self.gradient_sanity_check()
                 self.optimizer.step()
                 pbar.set_postfix({"loss": loss.item()})
                 if n_iter % eval_every_iter == 0:
@@ -173,3 +174,17 @@ class Trainer:
                         idx=f"single_batch_{str(self.epoch).zfill(3)}",
                     )
             self.model.train()
+
+    def gradient_sanity_check(self):
+        total_gradient = 0
+        no_grad_name = []
+        grad_name = []
+        for name, param in self.model.named_parameters():
+            if param.grad is None:
+                no_grad_name.append(name)
+                print(f"None grad: {name}")
+            else:
+                grad_name.append(name)
+                total_gradient += torch.sum(torch.abs(param.grad))
+        assert total_gradient == total_gradient
+        assert len(no_grad_name) == 0

@@ -16,5 +16,5 @@ class PixelReconstructionLoss(nn.Module):
 
         loss = (preds - target) ** 2
         loss = loss.mean(dim=-1)
-        loss = (loss * mask[:, :, 0]).sum() / mask[:, :, 0].sum()
+        loss = (loss * mask).sum() / mask.sum()
         return loss

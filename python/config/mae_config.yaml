@@ -6,13 +6,13 @@ MODEL:
   img_size: [3, 64, 64]
   embed_size: 256
   mask_fraction: 0.75
-  encoder_num_transformer_blocks: 12
-  encoder_num_attention_heads: 8
-  decoder_num_transformer_blocks: 8
-  decoder_num_attention_heads: 6
+  encoder_num_transformer_blocks: 8
+  encoder_num_attention_heads: 4
+  decoder_num_transformer_blocks: 4
+  decoder_num_attention_heads: 2
 DATA:
   root: "../data"
-  batch_size: 128
+  batch_size: 1
 OPTIM:
   optimizer: "AdamW"
   lr: 0.001
