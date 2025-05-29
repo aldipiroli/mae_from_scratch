@@ -75,8 +75,8 @@ class Trainer:
 
     def set_optimizer(self, optim_config):
         self.optim_config = optim_config
-        if self.optim_config["optimizer"] == "AdamW":
-            self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.optim_config["lr"])
+        if self.optim_config["optimizer"] == "Adam":
+            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.optim_config["lr"])
 
             self.scheduler = torch.optim.lr_scheduler.StepLR(
                 self.optimizer,
