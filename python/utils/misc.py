@@ -39,6 +39,10 @@ def get_logger(log_dir):
 
 def save_images(predictions, gts, save_dir="output", idx="idx"):
     n = len(predictions)
+    if n == 1:
+        predictions = [predictions,predictions]
+        gts = [gts,gts]
+        n = 2
 
     pred_np_list = []
     gt_np_list = []

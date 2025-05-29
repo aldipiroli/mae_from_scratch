@@ -72,12 +72,19 @@ class Trainer:
 
     def set_optimizer(self, optim_config):
         self.optim_config = optim_config
-        if self.optim_config["optimizer"] == "adam":
-            self.optimizer = torch.optim.Adam(
+        if self.optim_config["optimizer"] == "AdamW":
+            self.optimizer = torch.optim.AdamW(
                 self.model.parameters(), lr=self.optim_config["lr"]
             )
+
+            self.scheduler = torch.optim.lr_scheduler.StepLR(
+                self.optimizer,
+                step_size=self.optim_config.get("step_size", 10),
+                gamma=self.optim_config.get("gamma", 0.0005),
+            )
         else:
-            raise ValueError
+            raise ValueError("Unknown optimizer")
+
         self.logger.info(f"Optimizer: {self.optimizer}")
 
     def set_loss_function(self, loss_fn):
@@ -131,7 +138,7 @@ class Trainer:
         )
         self.model.train()
 
-    def train_on_single_batch(self, num_epochs=100000):
+    def train_on_single_batch(self, num_epochs=10000000):
         self.model.train()
 
         data_iter = iter(self.train_loader)
@@ -147,15 +154,16 @@ class Trainer:
             )
             loss.backward()
             self.optimizer.step()
+            # self.scheduler.step()
             print(f"[Single Batch] Epoch {epoch+1}/{num_epochs} - Loss: {loss.item():.6f}")
 
             self.model.eval()
             if epoch % 10 == 0:
                 with torch.no_grad():
-                        output_dict = self.model(data)
-                        pixel_preds = output_dict["pixel_preds"]
-                        x_patch = output_dict["x_patch"]
-                        save_images(
+                    output_dict = self.model(data)
+                    pixel_preds = output_dict["pixel_preds"]
+                    x_patch = output_dict["x_patch"]
+                    save_images(
                             self.model.patch_image.fold(pixel_preds, (64, 64)),
                             self.model.patch_image.fold(x_patch, (64, 64)),
                             save_dir=self.config["IMG_OUT_DIR"],

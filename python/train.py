@@ -27,7 +27,7 @@ def train():
     trainer.set_loss_function(loss_fn=PixelReconstructionLoss())
     trainer.save_checkpoint()
     trainer.load_latest_checkpoint()
-    trainer.train_on_single_batch()
+    trainer.train()
 
 
 if __name__ == "__main__":
