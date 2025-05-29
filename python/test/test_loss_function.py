@@ -10,8 +10,8 @@ def test_pixel_reconstruction_loss():
     b, n, d = 8, 64, 192
     x = torch.randn(b, n, d)
     y = torch.randn(b, n, d)
-    mask = torch.ones(b, n, d).bool()
-    mask[:, :10, :] = 0
+    mask = torch.ones(b, n).bool()
+    mask[:, :10] = 0
     loss_fn = PixelReconstructionLoss()
     loss = loss_fn(x, y, mask)
     assert loss > 0
