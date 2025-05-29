@@ -38,6 +38,19 @@ def get_logger(log_dir):
     return logger
 
 
+def plot_single_image(tensor, filename):
+    import numpy as np
+    from PIL import Image
+
+    if len(tensor.shape) == 4:
+        tensor = tensor.squeeze(0)
+
+    img = tensor.detach().cpu().numpy()
+    img = np.transpose(img, (1, 2, 0))
+    img = Image.fromarray((img * 255).astype(np.uint8))
+    img.save(filename)
+
+
 def save_images(predictions, gts, save_dir="output", idx="idx"):
     n = len(predictions)
     if n == 1:
