@@ -75,12 +75,17 @@ class MAE(nn.Module):
         img_size=(3, 64, 64),
         embed_size=256,
         mask_fraction=0.75,
-        num_transformer_blocks=12,
-        num_attention_heads=8,
+        encoder_num_transformer_blocks=12,
+        encoder_num_attention_heads=8,
+        decoder_num_transformer_blocks=12,
+        decoder_num_attention_heads=8,
     ):
         super(MAE, self).__init__()
-        self.num_transformer_blocks = num_transformer_blocks
-        self.num_attention_heads = num_attention_heads
+        self.encoder_num_transformer_blocks = encoder_num_transformer_blocks
+        self.encoder_num_attention_heads = encoder_num_attention_heads
+        self.decoder_num_transformer_blocks = decoder_num_transformer_blocks
+        self.decoder_num_attention_heads = decoder_num_attention_heads
+
         self.patch_kernel_size = patch_kernel_size
         self.img_size = img_size
         self.num_patches = int((img_size[1] / patch_kernel_size) ** 2)
@@ -95,11 +100,22 @@ class MAE(nn.Module):
             num_patches=self.num_patches,
         )
         self.encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.embed_size, nhead=4,batch_first=True
+            d_model=self.embed_size,
+            nhead=self.encoder_num_attention_heads,
+            batch_first=True,
+        )
+        self.decoder_layer = nn.TransformerEncoderLayer(
+            d_model=self.embed_size,
+            nhead=self.decoder_num_attention_heads,
+            batch_first=True,
         )
         self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=6
+            self.encoder_layer, num_layers=self.encoder_num_transformer_blocks
         )
+        self.transformer_decoder = nn.TransformerEncoder(
+            self.decoder_layer, num_layers=self.decoder_num_transformer_blocks
+        )
+        
         self.embed_mask = EmbedMasking(mask_fraction=self.mask_fraction)
         self.mask_tokens = nn.Parameter(
             data=torch.zeros(
@@ -111,9 +127,6 @@ class MAE(nn.Module):
             patch_dim=self.embed_size,
             embed_size=self.embed_size,
             num_patches=self.num_patches,
-        )
-        self.transformer_decoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=4
         )
 
         self.pixel_prediction = nn.Linear(self.embed_size, self.patch_dim)
