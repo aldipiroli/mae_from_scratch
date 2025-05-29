@@ -6,12 +6,14 @@ class PixelReconstructionLoss(nn.Module):
         super(PixelReconstructionLoss, self).__init__()
 
     def forward(self, preds, gt, mask, normalize=False):
-        loss_fn = torch.nn.MSELoss()
-        mean = torch.mean(gt, 2, keepdim=True)
-        std = torch.std(gt, 2, keepdim=True) + 1e-6
-        gt_norm = (gt - mean) / std
         if normalize:
-            loss = loss_fn(preds[mask], gt_norm[mask])
+            mean = torch.mean(gt, dim=-1, keepdim=True)
+            std = torch.std(gt, dim=-1, keepdim=True) + 1e-6
+            target = (gt-mean) / std
         else:
-            loss = loss_fn(preds[mask], gt[mask])
+            target = gt
+
+        loss = (preds - target) ** 2
+        loss = loss.mean(dim=-1)
+        loss = (loss * mask[:, :, 0]).sum() / mask[:, :, 0].sum()
         return loss
