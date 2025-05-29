@@ -51,45 +51,37 @@ def plot_single_image(tensor, filename):
     img.save(filename)
 
 
-def save_images(predictions, gts, mask, save_dir="output", idx="idx"):
+def save_images(predictions, gts, save_dir="output", idx="idx"):
     n = len(predictions)
     if n == 1:
         predictions = [predictions, predictions]
         gts = [gts, gts]
-        mask = [mask, mask]
         n = 2
 
     pred_np_list = []
     gt_np_list = []
-    mask_np_list = []
 
-    for pred, gt, m in zip(predictions, gts, mask):
+    for pred, gt in zip(predictions, gts):
         pred_np = pred.detach().cpu()
         gt_np = gt.detach().cpu()
-        mask_np = m.detach().cpu()
 
         if pred_np.dim() == 4:
             pred_np = pred_np[0]
         if gt_np.dim() == 4:
             gt_np = gt_np[0]
-        if mask_np.dim() == 4:
-            mask_np = mask_np[0]
 
         # Convert from (C, H, W) to (H, W, C)
         pred_np = np.transpose(pred_np.numpy(), (1, 2, 0))
         gt_np = np.transpose(gt_np.numpy(), (1, 2, 0))
-        mask_np = np.transpose(mask_np.numpy(), (1, 2, 0))
 
         # Normalize if needed
         pred_np = (pred_np - pred_np.min()) / (pred_np.max() - pred_np.min() + 1e-5)
         gt_np = (gt_np - gt_np.min()) / (gt_np.max() - gt_np.min() + 1e-5)
-        mask_np = (mask_np - mask_np.min()) / (mask_np.max() - mask_np.min() + 1e-5)
 
         pred_np_list.append(pred_np)
         gt_np_list.append(gt_np)
-        mask_np_list.append(mask_np)
 
-    fig, axs = plt.subplots(3, n, figsize=(4 * n, 12))
+    fig, axs = plt.subplots(2, n, figsize=(4 * n, 12))
 
     for i in range(n):
         axs[0, i].imshow(pred_np_list[i])
@@ -98,9 +90,6 @@ def save_images(predictions, gts, mask, save_dir="output", idx="idx"):
         axs[1, i].imshow(gt_np_list[i])
         axs[1, i].set_title(f"Ground Truth {i+1}")
         axs[1, i].axis("off")
-        axs[2, i].imshow(mask_np_list[i])
-        axs[2, i].set_title(f"Mask {i+1}")
-        axs[2, i].axis("off")
     fig.suptitle(str(idx), fontsize=16)
 
     plt.tight_layout()
