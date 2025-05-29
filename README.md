@@ -11,7 +11,7 @@ pip install -r requirements.txt
 cd python 
 python train.py
 ```
-Note: the script will download the [TinyImageNet dataset]("http://cs231n.stanford.edu/tiny-imagenet-200.zip") automatically.
+Note: the script will download the [TinyImageNet dataset](http://cs231n.stanford.edu/tiny-imagenet-200.zip) automatically.
 
 ### Reconstruction Examples
 ![Reconstruction Examples](img/output.gif)
